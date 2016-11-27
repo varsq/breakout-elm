@@ -7,7 +7,6 @@ import Platform.Sub exposing (batch)
 import AnimationFrame
 
 
-
 main =
   Html.program
     { init = init
@@ -28,17 +27,28 @@ type alias Player  =
     , height : Float
     }
 
+type alias Ball =
+    { x : Float
+    , y : Float
+    , velocityX : Float
+    , velocityY : Float
+    , size : Float
+    }
+
 type alias Game =
     { player : Player
+    , ball : Ball
     , screenWidth : Float
     , screenHeight : Float
     }
 
 defaultPlayer = Player 0 False False False 0.4 100 10
+defaultBall = Ball 300 300 0.01 0.01 6
 
 defaultGame : Game
 defaultGame =
     { player = defaultPlayer
+    , ball = defaultBall
     , screenWidth = 500
     , screenHeight = 680
     }
@@ -57,12 +67,19 @@ update : Msg -> Game -> (Game, Cmd Msg)
 update msg model =
   case msg of
     Tick diff ->
-      ({model | player = (playerMovement diff model)}, Cmd.none)
+      ({model
+        | player = (playerMovement diff model)
+        , ball = (ballMovement diff model.ball)}, Cmd.none)
     KeyDown keyCode ->
       ({model | player = (keyDown keyCode model.player) }, Cmd.none)
     KeyUp keyCode ->
       ({model | player = (keyUp keyCode model.player) }, Cmd.none)
 
+
+ballMovement : Time -> Ball -> Ball
+ballMovement diff ball = {ball
+    | x = ball.x + ball.velocityX * diff
+    , y = ball.y + ball.velocityY * diff}
 
 playerMovement : Time -> Game -> Player
 playerMovement diff game=
@@ -126,12 +143,17 @@ playerSvg game =
 rectBorder : Game -> Svg Msg
 rectBorder game = rect [ x "0", y "0", width (toString game.screenWidth), height (toString game.screenHeight), fillOpacity "0", stroke "black", strokeWidth "5"] []
 
+ball : Game -> Svg Msg
+ball game = circle [ cx (toString game.ball.x), cy (toString game.ball.y), r (toString game.ball.size)] []
+
+
 view : Game -> Html Msg
 view game =
         svg
             [ viewBox "0 0 600 900", width "1000px", height "900px", preserveAspectRatio "xMidYmid meet"]
             [ playerSvg game
             , rectBorder game
+            , ball game
             ]
 
 
