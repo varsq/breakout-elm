@@ -43,7 +43,7 @@ type alias Game =
     }
 
 defaultPlayer = Player 0 False False False 0.4 100 10
-defaultBall = Ball 300 300 0.01 0.01 6
+defaultBall = Ball 300 300 0.3 0.4 6
 
 defaultGame : Game
 defaultGame =
@@ -69,7 +69,7 @@ update msg model =
     Tick diff ->
       ({model
         | player = (playerMovement diff model)
-        , ball = (ballMovement diff model.ball)}, Cmd.none)
+        , ball = (ballMovement diff (ballCollision model))}, Cmd.none)
     KeyDown keyCode ->
       ({model | player = (keyDown keyCode model.player) }, Cmd.none)
     KeyUp keyCode ->
@@ -77,9 +77,25 @@ update msg model =
 
 
 ballMovement : Time -> Ball -> Ball
-ballMovement diff ball = {ball
-    | x = ball.x + ball.velocityX * diff
-    , y = ball.y + ball.velocityY * diff}
+ballMovement diff ball =
+        {ball
+            | x = ball.x + ball.velocityX * diff
+            , y = ball.y + ball.velocityY * diff}
+
+
+
+
+ballCollision : Game -> Ball
+ballCollision game =
+    let
+        ball = game.ball
+    in
+        if ball.x >= game.screenWidth || ball.x <= 0  then
+            {ball | velocityX = -ball.velocityX }
+        else if (ball.y >= game.screenHeight || ball.y <= 0) then
+            {ball | velocityY = -ball.velocityY }
+        else
+            ball
 
 playerMovement : Time -> Game -> Player
 playerMovement diff game=
