@@ -69,7 +69,7 @@ update msg model =
     Tick diff ->
       ({model
         | player = (playerMovement diff model)
-        , ball = (ballMovement diff (ballCollision model))}, Cmd.none)
+        , ball = (ballMovement diff (ballCollisionPlayer (ballCollisionEdge model)).ball)}, Cmd.none)
     KeyDown keyCode ->
       ({model | player = (keyDown keyCode model.player) }, Cmd.none)
     KeyUp keyCode ->
@@ -83,19 +83,30 @@ ballMovement diff ball =
             , y = ball.y + ball.velocityY * diff}
 
 
+ballCollisionPlayer : Game -> Game
+ballCollisionPlayer game =
+    let
+        ball = game.ball
+        player = game.player
+        playerY = game.screenHeight - player.height - 10
+    in
+        if (ball.x >= player.pos) && (ball.x <= (player.pos + player.width) && ball.y >= playerY) && (ball.y <= (playerY + player.width)) then
+                        { game | ball = {ball | velocityY = -ball.velocityY} }
+        else
+            game
 
 
-ballCollision : Game -> Ball
-ballCollision game =
+ballCollisionEdge : Game -> Game
+ballCollisionEdge game =
     let
         ball = game.ball
     in
         if ball.x >= game.screenWidth || ball.x <= 0  then
-            {ball | velocityX = -ball.velocityX }
+             { game | ball = {ball | velocityX = -ball.velocityX } }
         else if (ball.y >= game.screenHeight || ball.y <= 0) then
-            {ball | velocityY = -ball.velocityY }
+            { game | ball = {ball | velocityY = -ball.velocityY }}
         else
-            ball
+            game
 
 playerMovement : Time -> Game -> Player
 playerMovement diff game=
