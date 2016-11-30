@@ -43,7 +43,7 @@ type alias Game =
     }
 
 defaultPlayer = Player 0 False False False 0.4 100 10
-defaultBall = Ball 300 300 0.3 0.4 6
+defaultBall = Ball 300 300 0.8 0.9 6
 
 defaultGame : Game
 defaultGame =
@@ -69,7 +69,7 @@ update msg model =
     Tick diff ->
       ({model
         | player = (playerMovement diff model)
-        , ball = (ballMovement diff (ballCollisionPlayer (ballCollisionEdge model)).ball)}, Cmd.none)
+        , ball = ballTest diff model }, Cmd.none)
     KeyDown keyCode ->
       ({model | player = (keyDown keyCode model.player) }, Cmd.none)
     KeyUp keyCode ->
@@ -107,6 +107,50 @@ ballCollisionEdge game =
             { game | ball = {ball | velocityY = -ball.velocityY }}
         else
             game
+
+
+
+
+-- better collision with time
+ballTest : Time -> Game -> Ball
+ballTest diff game =
+    let
+        ball = game.ball
+        mouvementX = diff * ball.velocityX
+        mouvementY = diff * ball.velocityY
+        newX = ball.x + mouvementX
+        newY = ball.y + mouvementY
+        ballInverseX a = { ball | velocityX = -ball.velocityX}
+        ballInverseY b = { ball | velocityY = -ball.velocityY}
+
+    in
+        if (newX >= game.screenWidth || newX <= 0) then
+            let
+                distanceToRightEdge = game.screenWidth - ball.x
+                distanceToEdge = if distanceToRightEdge < ball.x then distanceToRightEdge else ball.x
+                ratio = distanceToEdge / mouvementX
+                diffBeforeCollision = diff * ratio
+                diffAfterCollision = mouvementX - diffBeforeCollision
+            in
+                ballMovement diffAfterCollision (ballInverseX (ballMovement diffBeforeCollision ball))
+        else if (newY >= game.screenHeight || newY <= 0) then
+            let
+                distanceToBottomEdge = game.screenHeight - ball.y
+                distanceToEdge = if distanceToBottomEdge < ball.y then distanceToBottomEdge else ball.y
+
+                ratio = distanceToEdge / mouvementY
+                diffBeforeCollision = diff * ratio
+                diffAfterCollision = mouvementY - diffBeforeCollision
+            in
+                ballMovement diffAfterCollision (ballInverseY (ballMovement diffBeforeCollision ball))
+        else
+            ballMovement diff ball
+
+
+
+
+
+
 
 playerMovement : Time -> Game -> Player
 playerMovement diff game=
