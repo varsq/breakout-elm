@@ -156,17 +156,21 @@ playerMovement : Time -> Game -> Player
 playerMovement diff game=
     let
         player = game.player
-        tmp = diff * player.velocity
+        movement = diff * player.velocity
     in
-        if ((player.left && player.right) || (not player.left && not player.right)) then
-            player
-        else if player.left then
-            if (player.pos - tmp <= 0) then { player | pos = 0}
-            else { player | pos = player.pos - (diff * player.velocity)}
-        else
-             if (player.pos + tmp >= game.screenWidth - player.width) then { player | pos = game.screenWidth - player.width}
-             else { player | pos = player.pos + (diff * player.velocity)}
-
+        case (player.left, player.right) of
+            (True,False) ->
+                if (player.pos - movement <= 0) then
+                    { player | pos = 0}
+                else
+                    { player | pos = player.pos - (diff * player.velocity)}
+            (False,True) ->
+                 if (player.pos + movement >= game.screenWidth - player.width) then
+                    { player | pos = game.screenWidth - player.width}
+                 else
+                    { player | pos = player.pos + (diff * player.velocity)}
+            (_,_) ->
+                 player
 
 keyDown : KeyCode -> Player -> Player
 keyDown code player =
