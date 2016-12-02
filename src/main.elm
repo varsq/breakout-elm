@@ -17,6 +17,7 @@ main =
 
 -- MODEL
 
+
 type alias Player  =
     { pos : Float
     , left : Bool
@@ -35,12 +36,22 @@ type alias Ball =
     , size : Float
     }
 
+type alias Enemy =
+    { x : Float
+    , y : Float
+    , width : Float
+    , height : Float
+    , durability : Int
+    }
+
 type alias Game =
     { player : Player
     , ball : Ball
+    , enemies : List Enemy
     , screenWidth : Float
     , screenHeight : Float
     }
+
 
 defaultPlayer = Player 0 False False False 0.4 100 10
 defaultBall = Ball 300 300 0.8 0.9 6
@@ -132,7 +143,10 @@ ballTest diff game =
                 diffBeforeCollision = diff * ratio
                 diffAfterCollision = mouvementX - diffBeforeCollision
             in
-                ballMovement diffAfterCollision (ballInverseX (ballMovement diffBeforeCollision ball))
+               ballMovement diffBeforeCollision ball
+                    |> ballInverseX
+                    |> ballMovement diffAfterCollision
+
         else if (newY >= game.screenHeight || newY <= 0) then
             let
                 distanceToBottomEdge = game.screenHeight - ball.y
@@ -142,7 +156,9 @@ ballTest diff game =
                 diffBeforeCollision = diff * ratio
                 diffAfterCollision = mouvementY - diffBeforeCollision
             in
-                ballMovement diffAfterCollision (ballInverseY (ballMovement diffBeforeCollision ball))
+                ballMovement diffBeforeCollision ball
+                    |> ballInverseY
+                    |> ballMovement diffAfterCollision
         else
             ballMovement diff ball
 
